@@ -104,7 +104,7 @@ const RestaurantItem = ({ category, name, distance, description }) => {
     `
     <li class="restaurant">
       <div class="restaurant__category">
-        <img src="/icons/${imageSource()}" alt="${category}" class="category-icon">
+        <img src="./icons/${imageSource()}" alt="${category}" class="category-icon">
       </div>
       <div class="restaurant__info">
         <h3 class="restaurant__name text-subtitle">${name}</h3>
