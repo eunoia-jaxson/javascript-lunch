@@ -38,37 +38,6 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     fetch(link.href, fetchOpts);
   }
 })();
-class Component {
-  constructor($target, props) {
-    __publicField(this, "$target");
-    __publicField(this, "props");
-    __publicField(this, "state", {});
-    this.$target = $target;
-    this.props = props;
-    this.setup();
-    this.initialRender();
-  }
-  setup() {
-  }
-  render() {
-    this.$target.insertAdjacentHTML("afterbegin", this.template());
-  }
-  initialRender() {
-    this.render();
-    this.componentDidMount();
-  }
-  componentDidMount() {
-  }
-  componentDidUpdate() {
-  }
-  setState(newState) {
-    this.state = { ...this.state, ...newState };
-    this.componentDidUpdate();
-  }
-  template() {
-    return "";
-  }
-}
 const Header = () => {
   return (
     /*html*/
@@ -83,28 +52,20 @@ const Header = () => {
   );
 };
 const RestaurantItem = ({ category, name, distance, description }) => {
-  const imageSource = () => {
-    switch (category) {
-      case "한식":
-        return "category-korean.png";
-      case "중식":
-        return "category-chinese.png";
-      case "일식":
-        return "category-japanese.png";
-      case "양식":
-        return "category-western.png";
-      case "아시안":
-        return "category-asian.png";
-      default:
-        return "category-etc.png";
-    }
+  const imageSource = {
+    한식: "category-korean.png",
+    중식: "category-chinese.png",
+    일식: "category-japanese.png",
+    양식: "category-western.png",
+    아시안: "category-asian.png",
+    기타: "category-etc.png"
   };
   return (
     /* html */
     `
     <li class="restaurant">
       <div class="restaurant__category">
-        <img src="./icons/${imageSource()}" alt="${category}" class="category-icon">
+        <img src="./icons/${imageSource[category]}" alt="${category}" class="category-icon">
       </div>
       <div class="restaurant__info">
         <h3 class="restaurant__name text-subtitle">${name}</h3>
@@ -119,8 +80,8 @@ const RestaurantList = (restaurants2) => {
   return (
     /* html */
     `
-    <section class="restaurant-list-container" data-testid="restaurant-list">
-      <ul class="restaurant-list">
+    <section class="restaurant-list-container">
+      <ul id="restaurant-list" class="restaurant-list" data-testid="restaurant-list">
         ${restaurants2.map((restaurant) => RestaurantItem(restaurant)).reverse().join("")}
       </ul>
     </section>
@@ -171,6 +132,36 @@ const restaurants = [
     link: ""
   }
 ];
+class Component {
+  constructor($target, props) {
+    __publicField(this, "$target");
+    __publicField(this, "props");
+    __publicField(this, "state", {});
+    this.$target = $target;
+    this.props = props;
+    this.setup();
+    this.initialRender();
+  }
+  setup() {
+  }
+  updateView() {
+    this.$target.insertAdjacentHTML("afterbegin", this.template());
+  }
+  initialRender() {
+    this.updateView();
+    this.componentDidMount();
+  }
+  componentDidMount() {
+  }
+  componentDidUpdate() {
+  }
+  setState(newState) {
+    this.state = { ...this.state, ...newState };
+  }
+  template() {
+    return "";
+  }
+}
 class Modal extends Component {
   setup() {
     this.state = {
@@ -189,9 +180,7 @@ class Modal extends Component {
     }
   }
   componentDidUpdate() {
-    if (this.state.isOpen) {
-      this.initialRender();
-    }
+    this.initialRender();
   }
   template() {
     if (!this.state.isOpen) return "";
@@ -210,6 +199,7 @@ class Modal extends Component {
   open() {
     if (!this.state.isOpen) {
       this.setState({ isOpen: true });
+      this.componentDidUpdate();
     }
   }
   close() {
@@ -422,6 +412,7 @@ class App extends Component {
     this.setState({
       restaurants: [...this.state.restaurants, newRestaurant]
     });
+    this.componentDidUpdate(newRestaurant);
   }
   template() {
     return (
@@ -433,8 +424,12 @@ class App extends Component {
     `
     );
   }
-  componentDidUpdate() {
-    this.renderRestaurantList();
+  componentDidUpdate(newRestaurant) {
+    const $restaurantList = document.querySelector("#restaurant-list");
+    $restaurantList.insertAdjacentHTML(
+      "afterbegin",
+      RestaurantItem(newRestaurant)
+    );
   }
   componentDidMount() {
     const $modal = new AddRestaurantModal(document.querySelector("#modal"), {
@@ -448,7 +443,6 @@ class App extends Component {
   }
   renderRestaurantList() {
     const $main = document.querySelector("main");
-    $main.replaceChildren();
     $main.insertAdjacentHTML(
       "afterbegin",
       RestaurantList(this.state.restaurants)
