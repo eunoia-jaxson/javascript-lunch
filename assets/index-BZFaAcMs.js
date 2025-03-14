@@ -403,7 +403,7 @@ bindEvents_fn = function() {
 };
 _handleCategoryChange = new WeakMap();
 _handleSortingChange = new WeakMap();
-class FilterBarManager {
+class FilterManager {
   constructor() {
     __privateAdd(this, _selectedCategory2, RULES.ALL_CATEGORY);
     __privateAdd(this, _selectedSorting2, RULES.SORTING[0]);
@@ -847,7 +847,7 @@ class App {
     __privateGet(this, _$target3).appendChild(__privateMethod(this, _App_instances, template_fn3).call(this));
     const $tabContainer = __privateGet(this, _$target3).querySelector("#tab-container");
     $tabContainer.appendChild(TabBar());
-    __privateSet(this, _filterBarManager, new FilterBarManager());
+    __privateSet(this, _filterBarManager, new FilterManager());
     __privateMethod(this, _App_instances, init_fn).call(this);
   }
 }
