@@ -753,16 +753,16 @@ function getFavoriteRestaurants(restaurants) {
   return restaurants.filter((restaurant) => restaurant.isFavorite);
 }
 class RestaurantManager {
-  constructor(filterBarManager, restaurants) {
+  constructor(filterManager, restaurants) {
     __privateAdd(this, _RestaurantManager_instances);
-    this.filterBarManager = filterBarManager;
+    this.filterManager = filterManager;
     this.restaurants = restaurants;
   }
   renderRestaurantList($main) {
     const filtered = filterAndSortRestaurants(
       this.restaurants,
-      this.filterBarManager.getSelectedCategory(),
-      this.filterBarManager.getSelectedSorting()
+      this.filterManager.getSelectedCategory(),
+      this.filterManager.getSelectedSorting()
     );
     __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, $main, filtered);
   }
@@ -781,8 +781,8 @@ class RestaurantManager {
     }
     const filtered = filterAndSortRestaurants(
       this.restaurants,
-      this.filterBarManager.getSelectedCategory(),
-      this.filterBarManager.getSelectedSorting()
+      this.filterManager.getSelectedCategory(),
+      this.filterManager.getSelectedSorting()
     );
     __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, $main, filtered);
   }
