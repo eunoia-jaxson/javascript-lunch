@@ -6,7 +6,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
-var _$target, _isOpen, _Modal_instances, mount_fn, template_fn, _addRestaurant, _AddRestaurantModal_instances, addEventListeners_fn, _handleSubmit, validateData_fn, _$target2, _selectedCategory, _selectedSorting, _onCategoryChange, _onSortingChange, _FilterBar_instances, options_fn, template_fn2, bindEvents_fn, _handleCategoryChange, _handleSortingChange, _selectedCategory2, _selectedSorting2, _TabManager_instances, setupTabListeners_fn, switchTab_fn, _restaurant, _onToggleFavorite, _onDeleteRestaurant, _RestaurantDetailModal_instances, addEventListeners_fn2, removeEventListeners_fn, _handleDelete, _handleFavoriteToggle, _restaurants, _onToggleFavorite2, _onDeleteRestaurant2, _updateList, _RestaurantList_instances, createTemplateElement_fn, addEventListeners_fn3, handleFavoriteClick_fn, handleRestaurantClick_fn, _RestaurantManager_instances, renderList_fn, isFavoriteTabActive_fn, _restaurants2, _$target3, _filterBarManager, _tabManager, _restaurantManager, _App_instances, template_fn3, init_fn, mount_fn2, renderMainArea_fn;
+var _$target, _isOpen, _Modal_instances, mount_fn, template_fn, _addRestaurant, _AddRestaurantModal_instances, addEventListeners_fn, _handleSubmit, validateData_fn, _$target2, _selectedCategory, _selectedSorting, _onCategoryChange, _onSortingChange, _FilterBar_instances, options_fn, template_fn2, bindEvents_fn, _handleCategoryChange, _handleSortingChange, _selectedCategory2, _selectedSorting2, _restaurantManager, _renderMainArea, _activeTab, _TabManager_instances, setupTabListeners_fn, switchTab_fn, _restaurant, _onToggleFavorite, _onDeleteRestaurant, _RestaurantDetailModal_instances, addEventListeners_fn2, removeEventListeners_fn, _handleDelete, _handleFavoriteToggle, _restaurants, _onToggleFavorite2, _onDeleteRestaurant2, _updateList, _RestaurantList_instances, createTemplateElement_fn, addEventListeners_fn3, _$main, _filterManager, _restaurants2, _RestaurantManager_instances, renderList_fn, _restaurants3, _$target3, _filterBarManager, _tabManager, _restaurantManager2, _App_instances, template_fn3, init_fn, mount_fn2, renderMainArea_fn;
 (function polyfill() {
   const relList = document.createElement("link").relList;
   if (relList && relList.supports && relList.supports("modulepreload")) {
@@ -66,7 +66,7 @@ const TabBar = () => {
       <button class="tab-bar__button" id="favorite-tab" data-testid="favorite-tab">자주 가는 음식점</button>
     </section>
   `.trim();
-  return template.content.firstElementChild;
+  return template.content;
 };
 class Modal {
   constructor($target) {
@@ -134,14 +134,18 @@ const FormFieldContainer = ({ contents, required, label, name }) => {
   `
   );
 };
-const RULES = Object.freeze({
+const RESTAURANT_CONSTRAINTS = Object.freeze({
   MAX_RESTAURANT_NAME: 15,
   MIN_RESTAURANT_NAME: 1,
+  MAX_DESCRIPTION_TEXT_LENGTH: 300
+});
+const FILTER_OPTIONS = Object.freeze({
   DISTANCES: Object.freeze([5, 10, 15, 20, 30]),
-  MAX_DESCRIPTION_TEXT_LENGTH: 300,
   CATEGORIES: Object.freeze(["한식", "중식", "일식", "양식", "아시안", "기타"]),
   ALL_CATEGORY: "전체",
-  SORTING: Object.freeze(["name", "distance"]),
+  SORTING: Object.freeze(["name", "distance"])
+});
+const MESSAGES = Object.freeze({
   DELETE_MESSAGE: "정말 삭제하시겠습니까?"
 });
 const Category = () => {
@@ -153,7 +157,7 @@ const Category = () => {
     `
     <select name="category" id="category" required data-testid="category">
       <option value="">선택해 주세요</option>
-      ${RULES.CATEGORIES.map(
+      ${FILTER_OPTIONS.CATEGORIES.map(
       (option) => `<option value="${option}">${option}</option>`
     ).join("")}
     </select>
@@ -168,7 +172,7 @@ const RestaurantName = () => {
   const contents = (
     /*html*/
     `
-    <input type="text" name="name" id="name" required minlength="${RULES.MIN_RESTAURANT_NAME}" maxlength="${RULES.MAX_RESTAURANT_NAME}" data-testid="restaurant-name" autocomplete="off" />
+    <input type="text" name="name" id="name" required minlength="${RESTAURANT_CONSTRAINTS.MIN_RESTAURANT_NAME}" maxlength="${RESTAURANT_CONSTRAINTS.MAX_RESTAURANT_NAME}" data-testid="restaurant-name" autocomplete="off" />
   `
   );
   return FormFieldContainer({ contents, required, label, name });
@@ -182,7 +186,7 @@ const Distance = () => {
     `
     <select name="distance" id="distance" required data-testid="distance">
       <option value="">선택해 주세요</option>
-      ${RULES.DISTANCES.map(
+      ${FILTER_OPTIONS.DISTANCES.map(
       (option) => `<option value="${option}">${option}분 내</option>`
     ).join("")};
     </select>
@@ -197,7 +201,7 @@ const Description = () => {
   const contents = (
     /*html*/
     `
-    <textarea name="description" id="description" cols="30" rows="5" maxlength="${RULES.MAX_DESCRIPTION_TEXT_LENGTH}" data-testid="description"></textarea>
+    <textarea name="description" id="description" cols="30" rows="5" maxlength="${RESTAURANT_CONSTRAINTS.MAX_DESCRIPTION_TEXT_LENGTH}" data-testid="description"></textarea>
     <span class="help-text text-caption">메뉴 등 추가 정보를 입력해 주세요.</span>
   `
   );
@@ -227,14 +231,14 @@ const validateCategory = (category) => {
     message: "카테고리를 선택해주세요."
   });
   toThrowNewError({
-    condition: !RULES.CATEGORIES.includes(category),
+    condition: !FILTER_OPTIONS.CATEGORIES.includes(category),
     message: "카테고리는 한식, 중식, 일식, 양식, 아시안, 기타 중 하나여야 합니다."
   });
 };
-const validateRestaurantName = (name, restaurants) => {
+const validateRestaurantName = (name) => {
   toThrowNewError({
-    condition: name.trim().length < RULES.MIN_RESTAURANT_NAME || name.trim().length > RULES.MAX_RESTAURANT_NAME,
-    message: `음식점 이름을 최소 ${RULES.MIN_RESTAURANT_NAME}글자 ~ 최대 ${RULES.MAX_RESTAURANT_NAME}글자 입력해주세요.`
+    condition: name.trim().length < RESTAURANT_CONSTRAINTS.MIN_RESTAURANT_NAME || name.trim().length > RESTAURANT_CONSTRAINTS.MAX_RESTAURANT_NAME,
+    message: `음식점 이름을 최소 ${RESTAURANT_CONSTRAINTS.MIN_RESTAURANT_NAME}글자 ~ 최대 ${RESTAURANT_CONSTRAINTS.MAX_RESTAURANT_NAME}글자 입력해주세요.`
   });
 };
 const validateDistance = (distance) => {
@@ -243,14 +247,14 @@ const validateDistance = (distance) => {
     message: "거리(도보 이동 시간)를 선택해주세요."
   });
   toThrowNewError({
-    condition: !RULES.DISTANCES.includes(parseInt(distance, 10)),
+    condition: !FILTER_OPTIONS.DISTANCES.includes(parseInt(distance, 10)),
     message: "거리(도보 이동 시간)는 5분, 10분, 15분, 20분, 30분 중 하나여야 합니다."
   });
 };
 const validateDescription = (description) => {
   toThrowNewError({
-    condition: description.length > RULES.MAX_DESCRIPTION_TEXT_LENGTH,
-    message: `설명은 ${RULES.MIN_DESCRIPTION_TEXT_LENGTH}자 이상 ${RULES.MAX_DESCRIPTION_TEXT_LENGTH}자 이하여야 합니다.`
+    condition: description.length > RESTAURANT_CONSTRAINTS.MAX_DESCRIPTION_TEXT_LENGTH,
+    message: `설명은 ${RESTAURANT_CONSTRAINTS.MIN_DESCRIPTION_TEXT_LENGTH}자 이상 ${RESTAURANT_CONSTRAINTS.MAX_DESCRIPTION_TEXT_LENGTH}자 이하여야 합니다.`
   });
 };
 const regularUrl = /^(https?:\/\/)?([\w\d.-]+)\.([a-z.]{2,6})(\/[\w\d.-]*)*\/?$/i;
@@ -366,7 +370,7 @@ _onCategoryChange = new WeakMap();
 _onSortingChange = new WeakMap();
 _FilterBar_instances = new WeakSet();
 options_fn = function() {
-  return RULES.CATEGORIES.map((category) => {
+  return FILTER_OPTIONS.CATEGORIES.map((category) => {
     return (
       /*html*/
       `
@@ -381,13 +385,13 @@ template_fn2 = function() {
     `
     <section class="restaurant-filter-container">
       <select name="category" id="category-filter" class="restaurant-filter" data-testid="category-filter">
-        <option value="${RULES.ALL_CATEGORY}">전체</option>
+        <option value="${FILTER_OPTIONS.ALL_CATEGORY}">전체</option>
         ${__privateMethod(this, _FilterBar_instances, options_fn).call(this)}
       </select>
 
       <select name="sorting" id="sorting-filter" class="restaurant-filter" data-testid="sorting">
-        <option value="${RULES.SORTING[0]}">이름순</option>
-        <option value="${RULES.SORTING[1]}">거리순</option>
+        <option value="${FILTER_OPTIONS.SORTING[0]}">이름순</option>
+        <option value="${FILTER_OPTIONS.SORTING[1]}">거리순</option>
       </select>
     </section>
   `
@@ -405,8 +409,8 @@ _handleCategoryChange = new WeakMap();
 _handleSortingChange = new WeakMap();
 class FilterManager {
   constructor() {
-    __privateAdd(this, _selectedCategory2, RULES.ALL_CATEGORY);
-    __privateAdd(this, _selectedSorting2, RULES.SORTING[0]);
+    __privateAdd(this, _selectedCategory2, FILTER_OPTIONS.ALL_CATEGORY);
+    __privateAdd(this, _selectedSorting2, FILTER_OPTIONS.SORTING[0]);
   }
   render($main, onFilterChange) {
     new FilterBar($main, {
@@ -434,12 +438,21 @@ _selectedSorting2 = new WeakMap();
 class TabManager {
   constructor(restaurantManager, renderMainArea) {
     __privateAdd(this, _TabManager_instances);
-    this.restaurantManager = restaurantManager;
-    this.renderMainArea = renderMainArea;
-    this.activeTab = "list";
+    __privateAdd(this, _restaurantManager);
+    __privateAdd(this, _renderMainArea);
+    __privateAdd(this, _activeTab);
+    __privateSet(this, _restaurantManager, restaurantManager);
+    __privateSet(this, _renderMainArea, renderMainArea);
+    __privateSet(this, _activeTab, "list");
     __privateMethod(this, _TabManager_instances, setupTabListeners_fn).call(this);
   }
+  getIsFavoriteTabActive() {
+    return __privateGet(this, _activeTab) === "favorite";
+  }
 }
+_restaurantManager = new WeakMap();
+_renderMainArea = new WeakMap();
+_activeTab = new WeakMap();
 _TabManager_instances = new WeakSet();
 setupTabListeners_fn = function() {
   const $listTab = document.querySelector("#list-tab");
@@ -448,19 +461,19 @@ setupTabListeners_fn = function() {
   $favoriteTab.addEventListener("click", () => __privateMethod(this, _TabManager_instances, switchTab_fn).call(this, "favorite"));
 };
 switchTab_fn = function(type) {
-  if (this.activeTab === type) return;
-  this.activeTab = type;
+  if (__privateGet(this, _activeTab) === type) return;
+  __privateSet(this, _activeTab, type);
   const $listTab = document.querySelector("#list-tab");
   const $favoriteTab = document.querySelector("#favorite-tab");
   if (type === "list") {
     $listTab.classList.add("active");
     $favoriteTab.classList.remove("active");
-    this.renderMainArea();
+    __privateGet(this, _renderMainArea).call(this);
     return;
   }
   $listTab.classList.remove("active");
   $favoriteTab.classList.add("active");
-  this.restaurantManager.renderFavoriteList();
+  __privateGet(this, _restaurantManager).renderFavoriteList();
 };
 const RestaurantContent = ({ restaurant }) => {
   return (
@@ -484,7 +497,7 @@ class RestaurantDetailModal extends Modal {
     __privateAdd(this, _onDeleteRestaurant);
     __privateAdd(this, _handleDelete, () => {
       try {
-        if (!confirm(RULES.DELETE_MESSAGE)) return;
+        if (!confirm(MESSAGES.DELETE_MESSAGE)) return;
         if (__privateGet(this, _onDeleteRestaurant)) {
           __privateGet(this, _onDeleteRestaurant).call(this, __privateGet(this, _restaurant).id);
         }
@@ -641,54 +654,83 @@ createTemplateElement_fn = function() {
   return $template.content.firstElementChild;
 };
 addEventListeners_fn3 = function($element) {
-  const $ul = $element.querySelector("#restaurant-list");
-  $ul.addEventListener("click", (event) => {
-    __privateMethod(this, _RestaurantList_instances, handleFavoriteClick_fn).call(this, event);
-    __privateMethod(this, _RestaurantList_instances, handleRestaurantClick_fn).call(this, event);
+  const $lis = $element.querySelectorAll(".restaurant");
+  $lis.forEach(($li) => {
+    const restaurantId = $li.dataset.id;
+    const $favoriteIcon = $li.querySelector(".favorite-icon");
+    $favoriteIcon.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (__privateGet(this, _onToggleFavorite2)) {
+        __privateGet(this, _onToggleFavorite2).call(this, restaurantId);
+      }
+      if (__privateGet(this, _updateList)) {
+        __privateGet(this, _updateList).call(this);
+      }
+    });
+    $li.addEventListener("click", () => {
+      const targetRestaurant = __privateGet(this, _restaurants).find(
+        (restaurant) => restaurant.id === restaurantId
+      );
+      const $detailModal = new RestaurantDetailModal(
+        document.querySelector("#modal"),
+        {
+          restaurant: targetRestaurant,
+          onToggleFavorite: __privateGet(this, _onToggleFavorite2),
+          onDeleteRestaurant: __privateGet(this, _onDeleteRestaurant2)
+        }
+      );
+      $detailModal.open();
+    });
   });
 };
-handleFavoriteClick_fn = function(event) {
-  const $target = event.target;
-  if (!$target.classList.contains("favorite-icon")) return;
-  const $li = $target.closest(".restaurant");
-  if (!$li) return;
-  const id = $li.dataset.id;
-  if (__privateGet(this, _onToggleFavorite2)) {
-    __privateGet(this, _onToggleFavorite2).call(this, id);
+function filterAndSortRestaurants(restaurants, category, sorting) {
+  let filteredRestaurants = [...restaurants];
+  if (category !== FILTER_OPTIONS.ALL_CATEGORY) {
+    filteredRestaurants = filteredRestaurants.filter(
+      (restaurant) => restaurant.category === category
+    );
   }
-  if (__privateGet(this, _updateList)) {
-    __privateGet(this, _updateList).call(this);
+  if (sorting === FILTER_OPTIONS.SORTING[1]) {
+    filteredRestaurants.sort((a, b) => {
+      const diff = a.distance - b.distance;
+      return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
+    });
+    return filteredRestaurants;
   }
-};
-handleRestaurantClick_fn = function(event) {
-  const $target = event.target;
-  if ($target.classList.contains("favorite-icon")) return;
-  const $li = $target.closest(".restaurant");
-  if (!$li) return;
-  const $detailModal = new RestaurantDetailModal(
-    document.querySelector("#modal"),
-    {
-      restaurant: __privateGet(this, _restaurants).find(
-        (restaurant) => restaurant.id === $li.dataset.id
-      ),
-      onToggleFavorite: __privateGet(this, _onToggleFavorite2),
-      onDeleteRestaurant: __privateGet(this, _onDeleteRestaurant2)
-    }
-  );
-  $detailModal.open();
-};
+  filteredRestaurants.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  return filteredRestaurants;
+}
+function getFavoriteRestaurants(restaurants) {
+  return restaurants.filter((restaurant) => restaurant.isFavorite);
+}
 const API_URL = "https://67bec437b2320ee050114166.mockapi.io/api";
+async function apiRequest(endpoint, options) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP Error! Status: ${response.status}`);
+  }
+  return await response.json();
+}
+async function fetchRestaurants() {
+  try {
+    const data = await apiRequest("/restaurants", {
+      method: "GET"
+    });
+    return data;
+  } catch (error) {
+    alert("데이터를 불러오지 못했습니다. 다시 시도해주세요.");
+    return [];
+  }
+}
 async function addRestaurant(restaurants, newRestaurant) {
   try {
-    const response = await fetch(`${API_URL}/restaurants`, {
+    const createdRestaurant = await apiRequest("/restaurants", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newRestaurant)
     });
-    if (!response.ok) {
-      throw new Error("Failed to add restaurant");
-    }
-    const createdRestaurant = await response.json();
     return [...restaurants, createdRestaurant];
   } catch (error) {
     alert("음식점을 추가하지 못했습니다. 다시 시도해주세요.");
@@ -697,12 +739,9 @@ async function addRestaurant(restaurants, newRestaurant) {
 }
 async function deleteRestaurant(restaurants, restaurantId) {
   try {
-    const response = await fetch(`${API_URL}/restaurants/${restaurantId}`, {
+    await apiRequest(`/restaurants/${restaurantId}`, {
       method: "DELETE"
     });
-    if (!response.ok) {
-      throw new Error("Failed to delete restaurant");
-    }
     return restaurants.filter((restaurant) => restaurant.id !== restaurantId);
   } catch (error) {
     alert("음식점을 삭제하지 못했습니다. 다시 시도해주세요.");
@@ -716,14 +755,10 @@ async function toggleFavorite(restaurants, restaurantId) {
   if (!target) return restaurants;
   const updatedRestaurant = { ...target, isFavorite: !target.isFavorite };
   try {
-    const response = await fetch(`${API_URL}/restaurants/${restaurantId}`, {
+    await apiRequest(`/restaurants/${restaurantId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedRestaurant)
     });
-    if (!response.ok) {
-      throw new Error("Failed to update favorite status");
-    }
     return restaurants.map(
       (restaurant) => restaurant.id === restaurantId ? updatedRestaurant : restaurant
     );
@@ -732,76 +767,58 @@ async function toggleFavorite(restaurants, restaurantId) {
     return restaurants;
   }
 }
-function filterAndSortRestaurants(restaurants, category, sorting) {
-  let filteredRestaurants = [...restaurants];
-  if (category !== RULES.ALL_CATEGORY) {
-    filteredRestaurants = filteredRestaurants.filter(
-      (restaurant) => restaurant.category === category
-    );
-  }
-  if (sorting === RULES.SORTING[1]) {
-    filteredRestaurants.sort((a, b) => {
-      const diff = a.distance - b.distance;
-      return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
-    });
-    return filteredRestaurants;
-  }
-  filteredRestaurants.sort((a, b) => a.name.localeCompare(b.name, "ko"));
-  return filteredRestaurants;
-}
-function getFavoriteRestaurants(restaurants) {
-  return restaurants.filter((restaurant) => restaurant.isFavorite);
-}
 class RestaurantManager {
-  constructor(filterManager, restaurants) {
+  constructor($main, filterManager, restaurants, getIsFavoriteTabActive) {
     __privateAdd(this, _RestaurantManager_instances);
-    this.filterManager = filterManager;
-    this.restaurants = restaurants;
+    __privateAdd(this, _$main);
+    __privateAdd(this, _filterManager);
+    __privateAdd(this, _restaurants2);
+    __privateSet(this, _$main, $main);
+    __privateSet(this, _filterManager, filterManager);
+    __privateSet(this, _restaurants2, restaurants);
+    this.getIsFavoriteTabActive = getIsFavoriteTabActive;
   }
-  renderRestaurantList($main) {
+  renderRestaurantList() {
     const filtered = filterAndSortRestaurants(
-      this.restaurants,
-      this.filterManager.getSelectedCategory(),
-      this.filterManager.getSelectedSorting()
+      __privateGet(this, _restaurants2),
+      __privateGet(this, _filterManager).getSelectedCategory(),
+      __privateGet(this, _filterManager).getSelectedSorting()
     );
-    __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, $main, filtered);
+    __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, __privateGet(this, _$main), filtered);
   }
   renderFavoriteList() {
-    const $main = document.querySelector("main");
-    $main.replaceChildren();
-    const favorites = getFavoriteRestaurants(this.restaurants);
-    __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, $main, favorites);
+    __privateGet(this, _$main).replaceChildren();
+    const favorites = getFavoriteRestaurants(__privateGet(this, _restaurants2));
+    __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, __privateGet(this, _$main), favorites);
   }
   updateList() {
-    const $main = document.querySelector("main");
-    if (__privateMethod(this, _RestaurantManager_instances, isFavoriteTabActive_fn).call(this)) {
-      const favorites = getFavoriteRestaurants(this.restaurants);
-      __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, $main, favorites);
+    if (this.getIsFavoriteTabActive()) {
+      this.renderFavoriteList();
       return;
     }
-    const filtered = filterAndSortRestaurants(
-      this.restaurants,
-      this.filterManager.getSelectedCategory(),
-      this.filterManager.getSelectedSorting()
-    );
-    __privateMethod(this, _RestaurantManager_instances, renderList_fn).call(this, $main, filtered);
+    this.renderRestaurantList();
   }
   async handleAddRestaurant(newRestaurant) {
-    this.restaurants = await addRestaurant(this.restaurants, newRestaurant);
+    __privateSet(this, _restaurants2, await addRestaurant(__privateGet(this, _restaurants2), newRestaurant));
     this.updateList();
   }
   async handleDeleteRestaurant(clickedId) {
-    this.restaurants = await deleteRestaurant(this.restaurants, clickedId);
+    __privateSet(this, _restaurants2, await deleteRestaurant(__privateGet(this, _restaurants2), clickedId));
     this.updateList();
   }
   async handleToggleFavorite(clickedId) {
-    this.restaurants = await toggleFavorite(this.restaurants, clickedId);
+    __privateSet(this, _restaurants2, await toggleFavorite(__privateGet(this, _restaurants2), clickedId));
     this.updateList();
   }
 }
+_$main = new WeakMap();
+_filterManager = new WeakMap();
+_restaurants2 = new WeakMap();
 _RestaurantManager_instances = new WeakSet();
 renderList_fn = function($main, restaurants) {
-  const $oldContainer = $main.querySelector(".restaurant-list-container");
+  const $oldContainer = __privateGet(this, _$main).querySelector(
+    ".restaurant-list-container"
+  );
   const $newList = new RestaurantList(restaurants, {
     onToggleFavorite: this.handleToggleFavorite.bind(this),
     onDeleteRestaurant: this.handleDeleteRestaurant.bind(this),
@@ -813,49 +830,28 @@ renderList_fn = function($main, restaurants) {
   }
   $main.appendChild($newList);
 };
-isFavoriteTabActive_fn = function() {
-  return document.querySelector("#favorite-tab").classList.contains("active");
-};
-async function fetchRestaurants() {
-  try {
-    const response = await fetch(
-      `${"https://67bec437b2320ee050114166.mockapi.io/api"}/restaurants`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" }
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP Error! Status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    alert("데이터를 불러오지 못했습니다. 다시 시도해주세요.");
-    return [];
-  }
-}
 class App {
   constructor($target) {
     __privateAdd(this, _App_instances);
-    __privateAdd(this, _restaurants2, []);
+    __privateAdd(this, _restaurants3, []);
     __privateAdd(this, _$target3);
     __privateAdd(this, _filterBarManager);
     __privateAdd(this, _tabManager);
-    __privateAdd(this, _restaurantManager);
+    __privateAdd(this, _restaurantManager2);
     __privateSet(this, _$target3, $target);
     __privateGet(this, _$target3).appendChild(__privateMethod(this, _App_instances, template_fn3).call(this));
+    this.$main = document.querySelector("main");
     const $tabContainer = __privateGet(this, _$target3).querySelector("#tab-container");
     $tabContainer.appendChild(TabBar());
     __privateSet(this, _filterBarManager, new FilterManager());
     __privateMethod(this, _App_instances, init_fn).call(this);
   }
 }
-_restaurants2 = new WeakMap();
+_restaurants3 = new WeakMap();
 _$target3 = new WeakMap();
 _filterBarManager = new WeakMap();
 _tabManager = new WeakMap();
-_restaurantManager = new WeakMap();
+_restaurantManager2 = new WeakMap();
 _App_instances = new WeakSet();
 template_fn3 = function() {
   const template = document.createElement("template");
@@ -869,15 +865,18 @@ template_fn3 = function() {
   return template.content;
 };
 init_fn = async function() {
-  __privateSet(this, _restaurants2, await fetchRestaurants());
-  __privateSet(this, _restaurantManager, new RestaurantManager(
+  __privateSet(this, _restaurants3, await fetchRestaurants());
+  __privateSet(this, _restaurantManager2, new RestaurantManager(
+    this.$main,
     __privateGet(this, _filterBarManager),
-    __privateGet(this, _restaurants2)
+    __privateGet(this, _restaurants3),
+    () => false
   ));
   __privateSet(this, _tabManager, new TabManager(
-    __privateGet(this, _restaurantManager),
+    __privateGet(this, _restaurantManager2),
     __privateMethod(this, _App_instances, renderMainArea_fn).bind(this)
   ));
+  __privateGet(this, _restaurantManager2).getIsFavoriteTabActive = __privateGet(this, _tabManager).getIsFavoriteTabActive.bind(__privateGet(this, _tabManager));
   __privateMethod(this, _App_instances, mount_fn2).call(this);
   __privateMethod(this, _App_instances, renderMainArea_fn).call(this);
 };
@@ -885,18 +884,17 @@ mount_fn2 = function() {
   const $gnbButton = __privateGet(this, _$target3).querySelector(".gnb__button");
   const $addModal = new AddRestaurantModal(
     document.querySelector("#modal"),
-    __privateGet(this, _restaurantManager).handleAddRestaurant.bind(__privateGet(this, _restaurantManager))
+    __privateGet(this, _restaurantManager2).handleAddRestaurant.bind(__privateGet(this, _restaurantManager2))
   );
   $gnbButton.addEventListener("click", () => $addModal.open());
 };
 renderMainArea_fn = function() {
-  const $main = document.querySelector("main");
-  $main.replaceChildren();
+  this.$main.replaceChildren();
   __privateGet(this, _filterBarManager).render(
-    $main,
-    __privateGet(this, _restaurantManager).updateList.bind(__privateGet(this, _restaurantManager))
+    this.$main,
+    __privateGet(this, _restaurantManager2).updateList.bind(__privateGet(this, _restaurantManager2))
   );
-  __privateGet(this, _restaurantManager).renderRestaurantList($main);
+  __privateGet(this, _restaurantManager2).renderRestaurantList();
 };
 const $app = document.querySelector("#app");
 new App($app);
